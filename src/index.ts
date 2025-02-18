@@ -1,28 +1,35 @@
 import { Elysia, t } from "elysia";
 import { swagger } from "@elysiajs/swagger";
+import "dotenv/config";
+import { drizzle } from "drizzle-orm/mysql2";
+import { db } from "./db/models";
+import {folders}  from "./db/schema/folders";
+import { eq, lt, gte, ne } from 'drizzle-orm';
 
-class Note {
-  constructor(public data: string[] = ["Moonhalo"]) {}
-}
+const conn = drizzle(process.env.DATABASE_URL as string);
+
+const { folder :inFolder }   = db.insert
+const { folder :selectFolder }   = db.select
+
 
 const app = new Elysia()
   .use(swagger())
-  .get("/", ({ path }) => path)
-  .get("/hello", "alalalong")
-  .decorate("note", new Note())
-  .get("/note", ({ note }) => note.data)
-  .get(
-    "/note/:index",
-    ({ note, params: { index }, error }) => {
-      return note.data[index] ?? error(404, "oh no :(");
-    },
-    {
-      params: t.Object({
-        index: t.Number(),
-      }),
+  .get("/", () =>{
+    const result =  conn.select().from(folders).where(eq(folders.parentDir,0));
+     return result
+    })
+  .post('/add-folder', async  ({ body }) => {
+   const resultFolder =   await conn.insert(folders).values(body).$returningId();
+    return {id_folder:resultFolder.map((val)=>val.id) }
+	}, 
+  {
+		body: t.Object({
+      parentDir: inFolder.parentDir,
+      foldersName: inFolder.foldersName,
     }
+		)}
   )
-  .listen(3000);
+  .listen(3001);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
