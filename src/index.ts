@@ -5,12 +5,19 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { db } from "./db/models";
 import {folders}  from "./db/schema/folders";
 import { eq, lt, gte, ne } from 'drizzle-orm';
+import { folders } from "./db/schema/folders";
+import { eq, lt, gte, ne, sql, and } from "drizzle-orm";
+import { mkdir, readdir, appendFile } from "node:fs/promises";
+import { unionAll } from "drizzle-orm/mysql-core";
+import { files } from "./db/schema/files";
+import dayjs from "dayjs";
 
 const conn = drizzle(process.env.DATABASE_URL as string);
 
 const { folder :inFolder }   = db.insert
 const { folder :selectFolder }   = db.select
 
+const { folder: inFolder, file: inFile } = db.insert;
 
 const app = new Elysia()
   .use(swagger())
@@ -26,6 +33,29 @@ const app = new Elysia()
 		body: t.Object({
       parentDir: inFolder.parentDir,
       foldersName: inFolder.foldersName,
+  .use(swagger({ path: "docs" }))
+  .onError(async ({ error, code, path }) => {
+    if (code === "NOT_FOUND") return;
+    const file = Bun.file(`logs/explorer-${dayjs().format("DD-MM-YYYY")}.log`);
+    const exists = await file.exists();
+    if (!exists) {
+      await mkdir(`logs`);
+      await Bun.write(`logs/explorer-${dayjs().format("DD-MM-YYYY")}.log`, "");
+    }
+
+    await appendFile(
+      `logs/explorer-${dayjs().format("DD-MM-YYYY")}.log`,
+      `${path} ${dayjs().format("DD-MM-YYYY HH:mm:ss")}: ${JSON.stringify(
+        error
+      )}\n\n`
+    );
+    // console.error(error);
+  })
+  .get("/", async () => {
+    const result = conn.select().from(folders).where(eq(folders.parentDir, 0));
+    // const result = await readdir("explorer/", { recursive: false });
+    return result;
+  })
   .post(
     "/add-folder",
     async ({ body }) => {
