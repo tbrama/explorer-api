@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@elysiajs/swagger": "^1.2.0",
+    "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.39.3",
     "drizzle-typebox": "^0.3.0",
@@ -20,6 +21,6 @@
   },
   "module": "src/index.js",
   "override": {
-  	"@sinclair/typebox": "0.32.4"
+    "@sinclair/typebox": "0.32.4"
   }
 }
