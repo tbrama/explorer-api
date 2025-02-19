@@ -7,6 +7,7 @@ import { folders } from "./db/schema/folders";
 import { eq, lt, gte, ne, sql, and, or, like } from "drizzle-orm";
 import { mkdir, readdir, appendFile, rename, rm } from "node:fs/promises";
 import dayjs from "dayjs";
+import { cors } from '@elysiajs/cors'
 
 const conn = drizzle(process.env.DATABASE_URL as string);
 
@@ -23,7 +24,7 @@ export interface FolderType {
 }
 
 const app = new Elysia()
-
+.use(cors({credentials:false, origin:"http://localhost:3000", methods:['GET', 'PUT', 'POST']}))
   .use(swagger({ path: "docs" }))
   .group("/explorer-api/v1", (app) =>
     app
