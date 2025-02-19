@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "9cb1a9e7-7500-4f92-885a-db10c7d266ca",
+  "id": "76ba7e0c-9670-420d-a359-0737d63faba0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "folders": {
@@ -14,9 +14,23 @@
           "notNull": true,
           "autoincrement": true
         },
+        "parentDir": {
+          "name": "parentDir",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "folders_name": {
           "name": "folders_name",
           "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "isFile": {
+          "name": "isFile",
+          "type": "int",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
