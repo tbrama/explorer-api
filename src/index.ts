@@ -7,7 +7,7 @@ import { folders } from "./db/schema/folders";
 import { eq, lt, gte, ne, sql, and, or, like } from "drizzle-orm";
 import { mkdir, readdir, appendFile, rename, rm } from "node:fs/promises";
 import dayjs from "dayjs";
-import { cors } from '@elysiajs/cors'
+import { cors } from "@elysiajs/cors";
 
 const conn = drizzle(process.env.DATABASE_URL as string);
 
@@ -24,7 +24,13 @@ export interface FolderType {
 }
 
 const app = new Elysia()
-.use(cors({credentials:false, origin:"http://localhost:3000", methods:['GET', 'PUT', 'POST']}))
+  .use(
+    cors({
+      credentials: false,
+      origin: "http://localhost:3000",
+      methods: ["GET", "PUT", "POST"],
+    })
+  )
   .use(swagger({ path: "docs" }))
   .group("/explorer-api/v1", (app) =>
     app
@@ -35,7 +41,8 @@ const app = new Elysia()
         );
         const exists = await file.exists();
         if (!exists) {
-          await mkdir(`logs`);
+          const folderExist = await readdir("logs");
+          if (!folderExist) await mkdir(`logs`);
           await Bun.write(
             `logs/explorer-${dayjs().format("DD-MM-YYYY")}.log`,
             ""
@@ -75,10 +82,15 @@ const app = new Elysia()
           SELECT *
           FROM hierarchy_paths`)
           );
-
+          let path = "Home";
+          if (index > 0) {
+            //@ts-ignore
+            path = resUnion[0].find(({ id }) => id == index).path;
+          }
           return {
             //@ts-ignore
             list: resUnion[0].filter(({ parentDir }) => parentDir == index),
+            path: path,
           };
         },
         {
@@ -277,10 +289,14 @@ const app = new Elysia()
 
           //@ts-ignore
           const path = `${resUnion[0].find(({ id }) => id == idF).path}`;
-          console.log(path);
 
           await Bun.write(`explorer/${path}`, body.file);
-          return { list: resUnion[0] };
+          return {
+            //@ts-ignore
+            list: resUnion[0].filter(
+              ({ parentDir }: any) => parentDir == body.parentDir
+            ),
+          };
         },
         {
           body: t.Object({
@@ -312,12 +328,18 @@ const app = new Elysia()
           FROM hierarchy_paths`)
           );
 
-          return { list: resUnion[0] };
+          return {
+            //@ts-ignore
+            list: resUnion[0].filter(
+              ({ parentDir }: any) => parentDir == body.parentDir
+            ),
+          };
         },
         {
           body: t.Object({
             path: t.String(),
             id: t.Number(),
+            parentDir: t.Number(),
           }),
         }
       )
