@@ -102,6 +102,7 @@ const app = new Elysia()
       .post(
         "/add-folder",
         async ({ body }) => {
+          console.log(body);
           const regex = /^[a-zA-Z0-9\s_-]+$/;
           if (!regex.test(body.foldersName))
             return {
@@ -155,12 +156,18 @@ const app = new Elysia()
 
           await mkdir(`explorer/${path}`, { recursive: true });
 
-          return { list: resUnion[0], msg: "" };
+          return {
+            //@ts-ignore
+            list: resUnion[0].filter(
+              ({ parentDir }: any) => parentDir == body.parentDir
+            ),
+            msg: "",
+          };
         },
         {
           body: t.Object({
-            parentDir: inFolder.parentDir,
             foldersName: inFolder.foldersName,
+            parentDir: inFolder.parentDir,
           }),
         }
       )
